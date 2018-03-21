@@ -27,11 +27,10 @@ extern "C"
   typedef struct mthread_mutexattr_s mthread_mutexattr_t;
 
   struct mthread_cond_s{
-    int cond;
-    mthread_tst_t lock;
-    mthread_list_t *list;
-  }
-  ;  // 0 is false 1 is yes
+      volatile int cond;
+      mthread_tst_t lock;
+      mthread_list_t *list;  /* lock management already handled */
+  }; 
   typedef struct mthread_cond_s mthread_cond_t;
 
   struct mthread_condattr_s;
@@ -44,10 +43,9 @@ extern "C"
 
   
   struct mthread_sem_s{
+      int init_value;
       mthread_tst_t lock;
-      int value;
-      mthread_mutex_t m_lock;
-      //HANDLE sem;
+      mthread_list_t *list; /* lock management already handled */
       int leftToUnblock;
   };
   typedef struct mthread_sem_s mthread_sem_t;

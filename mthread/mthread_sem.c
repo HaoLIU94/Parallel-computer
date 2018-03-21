@@ -9,13 +9,14 @@ mthread_sem_init (mthread_sem_t * sem, unsigned int value)
   if(sem == NULL)
     return -1;
   else{
-    sem->value = value ; //intialize number of thread as zero
+    sem->init_value = value ; //intialize number of thread as zero
     sem->lock = 0;  // lock state should be unlocked (unsigned int type)
-    mthread_mutex_init(&(sem->m_lock),NULL);
-    sem->leftToUnblock = 0;
-  return 0;
+    sem->leftToUnblock = value;
+    sem->list = (struct mthread_list_s *)safe_malloc(sizeof(struct mthread_list_s));
+    mthread_list_t INIT=MTHREAD_LIST_INIT;
+    *(sem->list) = INIT;
+    return 0;
   }
-  return 0;
 }
 
 /* P(sem), wait(sem) */
@@ -27,25 +28,22 @@ mthread_sem_wait (mthread_sem_t * sem)
     return -1;
   else{
     mthread_spinlock_lock(&(sem->lock));
-    if (sem->leftToUnblock <= 0){ //not availble
-      //mthread_cond_wait(sem->cond,sem->mutex);
-      mthread_mutex_lock(&(sem->m_lock));
-    } else { //availble let it go
-      sem->leftToUnblock--;
+    //mthread_cond_wait(sem->cond,sem->mutex);
+    mthread_t running;
+    if (sem->leftToUnblock > 0){  //Greater than zero let it go
+      sem->leftToUnblock--;       //Decrease the value
+      mthread_spinlock_unlock(&(sem->lock)); 
     }
-    mthread_spinlock_unlock(&(sem->lock));
-  }
-  return 0;
-}
-  
-  /*
-  mutex_lock();
-  if s-val <= 0
-    cond_wait()
-  value--;
-  mutex_unlock();
-  */
-
+    else {  //if locked then add current thread to waiting list
+      running = mthread_self();
+      mthread_insert_first(running,sem->list);
+      mthread_self()->status = BLOCKED;
+      mthread_get_vp()->p = &sem->lock;
+      mthread_yield();
+    }
+    return 0;
+  } 
+} 
 
 /* V(sem), signal(sem) */
 int
@@ -56,14 +54,18 @@ mthread_sem_post (mthread_sem_t * sem)
     return -1;
   else{
     mthread_spinlock_lock(&(sem->lock));
-    
-    if(sem->leftToUnblock < sem->value ){
+    mthread_t thread;
+    if(sem->list->first != NULL && sem->leftToUnblock < sem->init_value ){  //check list if anyone is waiting
       sem->leftToUnblock++;
-      mthread_mutex_unlock(&(sem->m_lock));
+      thread = mthread_remove_first(sem->list);
+      thread->status = RUNNING;
+      mthread_virtual_processor_t *vp;
+      vp = mthread_get_vp();
+      mthread_insert_last(thread,&vp->ready_list); //Insert to ready list ready to go
     }
     mthread_spinlock_unlock(&(sem->lock));
+    return 0;
   }
-   return 0;
 }
 
   /*
@@ -91,16 +93,13 @@ mthread_sem_trywait (mthread_sem_t * sem)
 int
 mthread_sem_destroy (mthread_sem_t * sem)
 {
-  not_implemented ();
+  if(sem->init_value==sem->leftToUnblock) /*mutex unlock*/
+  {
+    free(sem->list);  // delete it
+  }
+  else{
+    //mthread_log("Dangerous to destroy a locked mutex\n");
+    exit(-1);
+  }
   return 0;
 }
-
-/*
-how to write a rwlocks with semaphore or mutex
-mutex_lock()
-if (w->cond >=1)
-  w->value++
-  
-
-
-*/

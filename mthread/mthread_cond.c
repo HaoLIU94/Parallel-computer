@@ -8,15 +8,35 @@ int
 mthread_cond_init (mthread_cond_t * __cond,
 		   const mthread_condattr_t * __cond_attr)
 {
-  not_implemented ();
-  return 0;
+  //not_implemented ();
+  if(__cond == NULL)
+    return -1;
+  else{
+    __cond->lock = 0;  // lock state should be unlocked (unsigned int type)
+    __cond->cond = 0;
+    __cond->list = (struct mthread_list_s *)safe_malloc(sizeof(struct mthread_list_s));
+    mthread_list_t INIT=MTHREAD_LIST_INIT;
+    *(__cond->list) = INIT;
+    return 0;
+  }
 }
 
   /* Destroy condition variable COND.  */
 int
 mthread_cond_destroy (mthread_cond_t * __cond)
 {
-  not_implemented ();
+  if(__cond == NULL)
+  {
+    return 0;
+  }
+  if(__cond->list != NULL) /*mutex unlock*/
+  {
+    free(__cond->list);  // delete it
+  }
+  else{
+    //mthread_log("Dangerous to destroy a locked mutex\n");
+    exit(-1);
+  }
   return 0;
 }
 
@@ -25,6 +45,7 @@ int
 mthread_cond_signal (mthread_cond_t * __cond)
 {
   //not_implemented ();
+  /*
   if(__cond == NULL){
     return -1;
   }
@@ -39,6 +60,7 @@ mthread_cond_signal (mthread_cond_t * __cond)
     }
   }
   mthread_spinlock_unlock(&(__cond->lock));
+  */
   return 0;
 }
 
@@ -47,21 +69,21 @@ int
 mthread_cond_broadcast (mthread_cond_t * __cond)
 {
   //not_implemented ();
-  if(__cond == NULL){
+  if(__cond == NULL)
     return -1;
-  }
-  mthread_spinlock_lock(&(__cond->lock));
-  if(__cond->cond == 1){
-   
+  else{
+    mthread_spinlock_lock(&(__cond->lock));
     mthread_t thread;
-    while(__cond->list->first != NULL){  //check list
+    while(__cond->list->first != NULL){  //check list if anyone is waiting
       thread = mthread_remove_first(__cond->list);
+      thread->status = RUNNING;
       mthread_virtual_processor_t *vp;
       vp = mthread_get_vp();
-      mthread_insert_last(thread,&vp->ready_list);
+      mthread_insert_last(thread,&vp->ready_list); //Insert to ready list ready to go
     }
+    mthread_spinlock_unlock(&(__cond->lock));
+    return 0;
   }
-  mthread_spinlock_unlock(&(__cond->lock));
   return 0;
 }
 
@@ -71,16 +93,22 @@ int
 mthread_cond_wait (mthread_cond_t * __cond, mthread_mutex_t * __mutex)
 {
   //not_implemented ();
-  if(__cond == NULL){
+  if(__cond == NULL)
     return -1;
-  }
-  mthread_spinlock_lock(&(__cond->lock));
-  mthread_mutex_lock(__mutex);
-  if(__cond->cond ==1){
+  else{
+    mthread_spinlock_lock(&(__cond->lock));
+    //mthread_cond_wait(sem->cond,sem->mutex);
     mthread_t running;
-    running = mthread_self();
-    mthread_insert_first(running,__cond->list);
-  }
-  mthread_spinlock_lock(&(__cond->lock));
-  return 0;
+    if (__cond->cond == 0){  //Condition verified let it go
+      mthread_spinlock_unlock(&(__cond->lock)); 
+    }
+    else {  //if not then add current thread to waiting list
+      running = mthread_self();
+      mthread_insert_first(running,__cond->list);
+      mthread_self()->status = BLOCKED;
+      mthread_get_vp()->p = &__cond->lock;
+      mthread_yield();
+    }
+    return 0;
+  } 
 }
