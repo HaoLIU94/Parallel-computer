@@ -2,8 +2,8 @@
 #include <stdio.h>
 
 
-#define COUNT_PER_THREAD 100000000
-#define NUM_THREADS 10
+#define COUNT_PER_THREAD 1000000000
+#define NUM_THREADS 4
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 unsigned long count = 0;
@@ -25,7 +25,7 @@ void *  parallel_count(void *args){
 int main(int argc, char** argv)
 {
    unsigned long i;
-   /*pthread_t pid[NUM_THREADS];
+   pthread_t pid[NUM_THREADS];
    
    
    for(i = 0; i < NUM_THREADS; ++i){
@@ -36,13 +36,13 @@ int main(int argc, char** argv)
       void* res;
       pthread_join(pid[i], NULL);
    }
-   */
-
+   
+   /*
    for(i=0; i < NUM_THREADS*COUNT_PER_THREAD; ++i){
       ++count;
    }
 
-
+   */
    printf("Final count %ld\n", count);
    
    return 0;

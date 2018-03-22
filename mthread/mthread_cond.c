@@ -45,22 +45,22 @@ int
 mthread_cond_signal (mthread_cond_t * __cond)
 {
   //not_implemented ();
-  /*
-  if(__cond == NULL){
+  //not_implemented ();
+  if(__cond == NULL)
     return -1;
-  }
-  mthread_spinlock_lock(&(__cond->lock));
-  if(__cond->cond == 1){
+  else{
+    mthread_spinlock_lock(&(__cond->lock));
     mthread_t thread;
-    if(__cond->list->first != NULL){  //check list
+    if(__cond->list->first != NULL){  //check waiting list, activate the first one
       thread = mthread_remove_first(__cond->list);
+      thread->status = RUNNING;
       mthread_virtual_processor_t *vp;
       vp = mthread_get_vp();
-      mthread_insert_last(thread,&vp->ready_list);
+      mthread_insert_last(thread,&vp->ready_list); //Insert to ready list ready to go
     }
+    mthread_spinlock_unlock(&(__cond->lock));
+    return 0;
   }
-  mthread_spinlock_unlock(&(__cond->lock));
-  */
   return 0;
 }
 
@@ -74,7 +74,7 @@ mthread_cond_broadcast (mthread_cond_t * __cond)
   else{
     mthread_spinlock_lock(&(__cond->lock));
     mthread_t thread;
-    while(__cond->list->first != NULL){  //check list if anyone is waiting
+    while(__cond->list->first != NULL){  //check waiting list, activate them all
       thread = mthread_remove_first(__cond->list);
       thread->status = RUNNING;
       mthread_virtual_processor_t *vp;
@@ -84,7 +84,6 @@ mthread_cond_broadcast (mthread_cond_t * __cond)
     mthread_spinlock_unlock(&(__cond->lock));
     return 0;
   }
-  return 0;
 }
 
   /* Wait for condition variable COND to be signaled or broadcast.
