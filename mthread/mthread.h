@@ -1,10 +1,11 @@
 #ifndef __MTHREAD_MTHREAD_H__
 #define __MTHREAD_MTHREAD_H__
-#ifdef __cplusplus  
+#ifdef __cplusplus 
 extern "C"
 {
 #endif
   /* Types */
+
   typedef  volatile unsigned int mthread_tst_t;
 
   struct mthread_list_s;
@@ -46,7 +47,7 @@ extern "C"
       int init_value;
       mthread_tst_t lock;
       mthread_list_t *list; /* lock management already handled */
-      int leftToUnblock;
+      int avail;
   };
   typedef struct mthread_sem_s mthread_sem_t;
 

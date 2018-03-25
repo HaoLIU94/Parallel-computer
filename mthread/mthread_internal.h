@@ -49,6 +49,7 @@ struct mthread_s{
 };
 
 #define MTHREAD_LIST_INIT {NULL,NULL,0}
+#define MTHREAD_MUTEX_INITIALIZER(mthread_mutex_t) {0,0,MTHREAD_LIST_INIT};
 
   extern int mthread_test_and_set(mthread_tst_t *atomic);
   extern void mthread_spinlock_lock(mthread_tst_t *atomic);

@@ -7,6 +7,7 @@
 
   /* Initialize MUTEX using attributes in *MUTEX_ATTR, or use the
      default values if later is NULL.  */
+
 int
 mthread_mutex_init (mthread_mutex_t * __mutex,
 		    const mthread_mutexattr_t * __mutex_attr)

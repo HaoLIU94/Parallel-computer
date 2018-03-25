@@ -1,4 +1,6 @@
-//gcc main_test.c -lmthread -L./lib -pthread -Wal
+//add mthread.h to /usr/local/include
+//compile gcc test.c -lmthread -L./mthread/lib -pthread -Wall
+
 #include "mthread_internal.h"
 #include <sched.h>
 

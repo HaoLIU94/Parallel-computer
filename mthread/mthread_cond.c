@@ -13,7 +13,6 @@ mthread_cond_init (mthread_cond_t * __cond,
     return -1;
   else{
     __cond->lock = 0;  // lock state should be unlocked (unsigned int type)
-    __cond->cond = 0;
     __cond->list = (struct mthread_list_s *)safe_malloc(sizeof(struct mthread_list_s));
     mthread_list_t INIT=MTHREAD_LIST_INIT;
     *(__cond->list) = INIT;
@@ -57,7 +56,9 @@ mthread_cond_signal (mthread_cond_t * __cond)
       mthread_virtual_processor_t *vp;
       vp = mthread_get_vp();
       mthread_insert_last(thread,&vp->ready_list); //Insert to ready list ready to go
-    }
+    }else{
+      __cond->cond = 0;  //no one is left
+    } 
     mthread_spinlock_unlock(&(__cond->lock));
     return 0;
   }
@@ -96,12 +97,16 @@ mthread_cond_wait (mthread_cond_t * __cond, mthread_mutex_t * __mutex)
     return -1;
   else{
     mthread_spinlock_lock(&(__cond->lock));
-    //mthread_cond_wait(sem->cond,sem->mutex);
-    mthread_t running;
-    if (__cond->cond == 0){  //Condition verified let it go
-      mthread_spinlock_unlock(&(__cond->lock)); 
+    /*
+    if( __mutex != NULL)
+    {
+       __cond->cond = __mutex->nb_thread; //if mutex is locked so our condition is set locked as well
     }
-    else {  //if not then add current thread to waiting list
+    */
+    mthread_t running;
+    if (__cond->cond == 0 ){  //Condition verified (unlock) let it go
+      mthread_spinlock_unlock(&(__cond->lock)); 
+    }else{  //if locked then add current thread to cond waiting list
       running = mthread_self();
       mthread_insert_first(running,__cond->list);
       mthread_self()->status = BLOCKED;
