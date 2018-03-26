@@ -1,0 +1,14 @@
+Instruction to Mthread
+
+# Author Hao LIU
+# Date 25/03/2018
+
+# Go to ./mthread/ and make
+cd ./mthread/
+make
+
+# Copy mthread.h to /usr/local/include/
+sudo cp ./mthread.h /usr/local/include/
+
+# compile to generate executable file 
+gcc xxxx.c -lmthread -L./mthread/lib -pthread -Wall
