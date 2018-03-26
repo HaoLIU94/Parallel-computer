@@ -14,7 +14,7 @@ int main(int argc, char **argv)
 		{
 	    	printf("Je suis le maitre !\n");
 		}
-	
+#pragma omp for schedule(static) 
 		for(i = 0 ; i < N ; i++)
 		{
 	    	sum_loc += i;

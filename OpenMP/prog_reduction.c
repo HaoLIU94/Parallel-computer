@@ -8,22 +8,18 @@ int main(int argc, char **argv)
 
 #pragma omp parallel shared(sum,N)
     {
-		int i, sum_loc = 0;
+    	int  i;
 
 #pragma omp master
-		{
-	    	printf("Je suis le maitre !\n");
-		}
-	
-		for(i = 0 ; i < N ; i++)
-		{
-	    	sum_loc += i;
-		}
+	{
+	    printf("Je suis le maitre !\n");
+	}
+#pragma omp for schedule(static) reduction(+:sum)
+	for(i = 0 ; i < N ; i++)
+	{
+	    sum += i;
+	}
 
-#pragma omp critical
-		{
-	    	sum += sum_loc;
-		}
     }
 
     printf("sum = %d\n", sum);
