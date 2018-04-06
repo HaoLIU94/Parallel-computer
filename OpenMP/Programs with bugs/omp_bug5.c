@@ -51,12 +51,14 @@ for (i=0; i<N; i++) {
       printf("Thread %d updating a[]\n",tid);
       for (i=0; i<N; i++)
         a[i] += DELTA * i;
+      omp_unset_lock(&locka);
+
       omp_set_lock(&lockb);
       printf("Thread %d updating b[]\n",tid);
       for (i=0; i<N; i++)
         b[i] += DELTA + i;
       omp_unset_lock(&lockb);
-      omp_unset_lock(&locka);
+      
       }
 
     #pragma omp section
@@ -65,15 +67,17 @@ for (i=0; i<N; i++) {
       printf("Thread %d updating b[]\n",tid);
       for (i=0; i<N; i++)
         b[i] += PI * i;
+      omp_unset_lock(&lockb);
+      
       omp_set_lock(&locka);
       printf("Thread %d adding b[] to a[]\n",tid);
       for (i=0; i<N; i++)
         a[i] += PI + i;
       omp_unset_lock(&locka);
-      omp_unset_lock(&lockb);
       }
 
     }  /* end of sections */
+    #pragma omp barrier
   }  /* end of parallel region */
 
   printf("Sample results: %f %f %f %f\n",a[0],b[0],a[999999],b[999999]);

@@ -25,8 +25,7 @@ chunk = CHUNKSIZE;
 
 #pragma omp parallel     \
   shared(a,b,c,chunk)            \
-  private(i,tid)             \
-  
+  private(i,tid)
   {
   tid = omp_get_thread_num();
   #pragma omp for schedule(static,chunk)
